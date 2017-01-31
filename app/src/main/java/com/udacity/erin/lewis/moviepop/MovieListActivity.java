@@ -23,10 +23,17 @@ import org.json.JSONObject;
 import cz.msebera.android.httpclient.Header;
 
 public class MovieListActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler {
-    private View currentView;
     private MovieAdapter mAdapter;
     private RecyclerView movieRecyclerView;
     private MovieListModel moviedata;
+    private RadioButton rButtonTopRated;
+    private RadioButton rButtonPopular;
+
+    private enum CurrentSort {
+        TOPRATED, POPULAR
+    }
+
+    private CurrentSort currentSort = CurrentSort.TOPRATED;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,7 +45,7 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
     }
 
     private void setupMovieList() {
-        WebService.getByUrl(getPopularURL(), null, new JsonHttpResponseHandler() {
+        WebService.getByUrl(getTopRatedURL(), null, new JsonHttpResponseHandler() {
             @Override
             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                 moviedata = new Gson().fromJson(response.toString(), MovieListModel.class);
@@ -125,12 +132,47 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
 
         AlertDialog.Builder builder = new android.support.v7.app.AlertDialog.Builder(this);
 
-        builder.setView(inflater.inflate(R.layout.dialog_sort, null));
+        View dialogView = inflater.inflate(R.layout.dialog_sort, null);
+
+        rButtonTopRated = (RadioButton) dialogView.findViewById(R.id.radio_top_rated);
+        rButtonPopular = (RadioButton) dialogView.findViewById(R.id.radio_popular);
+
+        switch (currentSort) {
+            case POPULAR:
+                rButtonPopular.setChecked(true);
+                break;
+            case TOPRATED:
+                rButtonTopRated.setChecked(true);
+                break;
+        }
+
+        builder.setView(dialogView);
         builder.setTitle("Change Sort Order");
         builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                switch (currentSort) {
+                    case TOPRATED:
+                        WebService.getByUrl(getTopRatedURL(), null, new JsonHttpResponseHandler() {
+                            @Override
+                            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                                moviedata = new Gson().fromJson(response.toString(), MovieListModel.class);
 
+                                setMovieListAdapter();
+                            }
+                        });
+                        break;
+                    case POPULAR:
+                        WebService.getByUrl(getPopularURL(), null, new JsonHttpResponseHandler() {
+                            @Override
+                            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                                moviedata = new Gson().fromJson(response.toString(), MovieListModel.class);
+
+                                setMovieListAdapter();
+                            }
+                        });
+                        break;
+                }
             }
         });
 
@@ -143,15 +185,21 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
         boolean checked = ((RadioButton) view).isChecked();
 
         // Check which radio button was clicked
-        switch(view.getId()) {
+        switch (view.getId()) {
             case R.id.radio_top_rated:
-                if (checked)
+                if (checked) {
+                    currentSort = CurrentSort.TOPRATED;
+                    rButtonTopRated.setChecked(true);
+                }
 
-                    break;
+                break;
             case R.id.radio_popular:
-                if (checked)
+                if (checked) {
+                    currentSort = CurrentSort.POPULAR;
+                    rButtonPopular.setChecked(true);
+                }
 
-                    break;
+                break;
         }
     }
 }
