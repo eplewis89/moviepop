@@ -1,4 +1,4 @@
-package com.udacity.erin.lewis.moviepop;
+package com.udacity.erin.lewis.moviepop.models;
 
 import java.util.List;
 
@@ -11,6 +11,16 @@ public class MovieListModel {
     public List<MovieModel> results;
     public int total_results;
     public int total_pages;
+
+    private static MovieListModel instance = null;
+
+    public static MovieListModel getInstance() {
+        return instance;
+    }
+
+    public static void setInstance(MovieListModel model) {
+        instance = model;
+    }
 
     public MovieListModel() {
         page = 0;

@@ -1,4 +1,4 @@
-package com.udacity.erin.lewis.moviepop;
+package com.udacity.erin.lewis.moviepop.models;
 
 import android.os.Parcel;
 import android.os.Parcelable;
@@ -22,6 +22,7 @@ public class MovieModel implements Parcelable{
     public int vote_count;
     public boolean video;
     public double vote_average;
+    public boolean isFavorite;
 
     public MovieModel() {
         poster_path = "";
@@ -38,6 +39,7 @@ public class MovieModel implements Parcelable{
         vote_count = 0;
         video = false;
         vote_average = 0.0;
+        isFavorite = false;
     }
 
     public MovieModel(Parcel in) {
@@ -78,6 +80,7 @@ public class MovieModel implements Parcelable{
         parcel.writeByte((byte) (video ? 1 : 0));
         parcel.writeInt(genre_ids != null ? genre_ids.length : 0);
         parcel.writeIntArray(genre_ids != null ? genre_ids : new int[0]);
+        parcel.writeByte((byte) (isFavorite ? 1 : 0));
     }
 
     private void readFromParcel(Parcel in) {
@@ -96,5 +99,6 @@ public class MovieModel implements Parcelable{
         video = in.readByte() != 0;
         genre_ids = new int[in.readInt()];
         in.readIntArray(genre_ids);
+        isFavorite = in.readByte() != 0;
     }
 }

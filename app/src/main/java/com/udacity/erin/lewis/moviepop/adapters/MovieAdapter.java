@@ -8,8 +8,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 
 import com.squareup.picasso.Picasso;
-import com.udacity.erin.lewis.moviepop.MovieListModel;
-import com.udacity.erin.lewis.moviepop.MovieModel;
+import com.udacity.erin.lewis.moviepop.models.MovieListModel;
+import com.udacity.erin.lewis.moviepop.models.MovieModel;
 import com.udacity.erin.lewis.moviepop.R;
 
 import java.util.List;

@@ -11,6 +11,8 @@
     <string name="tmdbtoprated">top_rated</string>
     <string name="tmdbpopular">popular</string>
     <string name="tmdblanguage">en-US</string>
+    <string name="tmdbvideos">videos</string>
+    <string name="tmdbreviews">reviews</string>
 
     <!-- TMDB image related strings -->
     <string name="tmdbimagepath">https://image.tmdb.org/t/p/</string>

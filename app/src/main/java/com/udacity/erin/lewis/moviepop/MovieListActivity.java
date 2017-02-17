@@ -2,8 +2,8 @@ package com.udacity.erin.lewis.moviepop;
 
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -13,24 +13,35 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.RadioButton;
+import android.widget.TextView;
 
 import com.google.gson.Gson;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.udacity.erin.lewis.moviepop.adapters.MovieAdapter;
+import com.udacity.erin.lewis.moviepop.helpers.URLHelper;
+import com.udacity.erin.lewis.moviepop.helpers.WebService;
+import com.udacity.erin.lewis.moviepop.models.MovieListModel;
 
 import org.json.JSONObject;
 
 import cz.msebera.android.httpclient.Header;
 
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+
 public class MovieListActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler {
+    private static final String BUNDLE_RECYCLER_LAYOUT = "movielistactivity.recycler.layout";
+
     private MovieAdapter mAdapter;
     private RecyclerView movieRecyclerView;
     private MovieListModel moviedata;
     private RadioButton rButtonTopRated;
     private RadioButton rButtonPopular;
+    private TextView mLoadingTV;
+    private String apikey;
 
     private enum CurrentSort {
-        TOPRATED, POPULAR
+        TOPRATED, POPULAR, FAVORITES
     }
 
     private CurrentSort currentSort = CurrentSort.TOPRATED;
@@ -39,61 +50,57 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        apikey = getString(R.string.tmdbapikey);
+
         setContentView(R.layout.activity_movie_list);
+
+        mLoadingTV = (TextView) findViewById(R.id.loading_tv);
 
         setupMovieList();
     }
 
     private void setupMovieList() {
-        WebService.getByUrl(getTopRatedURL(), null, new JsonHttpResponseHandler() {
-            @Override
-            public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
-                moviedata = new Gson().fromJson(response.toString(), MovieListModel.class);
+        if (MovieListModel.getInstance() == null) {
+            WebService.getByUrl(URLHelper.getURL(getBaseContext(), getString(R.string.tmdbtoprated), apikey), null, new JsonHttpResponseHandler() {
+                @Override
+                public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
+                    moviedata = new Gson().fromJson(response.toString(), MovieListModel.class);
 
-                setMovieListAdapter();
-            }
-        });
+                    MovieListModel.setInstance(moviedata);
+
+                    setMovieListAdapter();
+                }
+            });
+        } else {
+            moviedata = MovieListModel.getInstance();
+
+            setMovieListAdapter();
+        }
     }
 
     private void setMovieListAdapter() {
         mAdapter = new MovieAdapter(this);
         mAdapter.setMovieData(moviedata);
 
+        int gridcolumns = 0;
+
+        switch (getResources().getConfiguration().orientation) {
+            case ORIENTATION_LANDSCAPE:
+                gridcolumns = 4;
+
+                break;
+            case ORIENTATION_PORTRAIT:
+            default:
+                gridcolumns = 2;
+        }
+
+
         movieRecyclerView = (RecyclerView) findViewById(R.id.movielist);
-        movieRecyclerView.setLayoutManager(new GridLayoutManager(this, 2));
+        movieRecyclerView.setLayoutManager(new GridLayoutManager(this, gridcolumns));
         movieRecyclerView.setAdapter(mAdapter);
-    }
 
-    private String getTopRatedURL() {
-        Uri.Builder builder = new
-                Uri.Builder();
-
-        builder.scheme(getString(R.string.tmdbscheme))
-                .authority(getString(R.string.tmdbauthority))
-                .appendPath(getString(R.string.tmdbversion))
-                .appendPath(getString(R.string.tmdbendpoint))
-                .appendPath(getString(R.string.tmdbtoprated))
-                .appendQueryParameter("api_key", getString(R.string.tmdbapikey))
-                .appendQueryParameter("language", getString(R.string.tmdblanguage))
-                .appendQueryParameter("page", "1");
-
-        return builder.build().toString();
-    }
-
-    private String getPopularURL() {
-        Uri.Builder builder = new
-                Uri.Builder();
-
-        builder.scheme(getString(R.string.tmdbscheme))
-                .authority(getString(R.string.tmdbauthority))
-                .appendPath(getString(R.string.tmdbversion))
-                .appendPath(getString(R.string.tmdbendpoint))
-                .appendPath(getString(R.string.tmdbpopular))
-                .appendQueryParameter("api_key", getString(R.string.tmdbapikey))
-                .appendQueryParameter("language", getString(R.string.tmdblanguage))
-                .appendQueryParameter("page", "1");
-
-        return builder.build().toString();
+        mLoadingTV.setVisibility(View.GONE);
+        movieRecyclerView.setVisibility(View.VISIBLE);
     }
 
     @Override
@@ -151,22 +158,29 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
         builder.setPositiveButton("Save", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+                mLoadingTV.setVisibility(View.VISIBLE);
+                movieRecyclerView.setVisibility(View.GONE);
+
                 switch (currentSort) {
                     case TOPRATED:
-                        WebService.getByUrl(getTopRatedURL(), null, new JsonHttpResponseHandler() {
+                        WebService.getByUrl(URLHelper.getURL(getParent(), getString(R.string.tmdbtoprated), apikey), null, new JsonHttpResponseHandler() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                                 moviedata = new Gson().fromJson(response.toString(), MovieListModel.class);
+
+                                MovieListModel.setInstance(moviedata);
 
                                 setMovieListAdapter();
                             }
                         });
                         break;
                     case POPULAR:
-                        WebService.getByUrl(getPopularURL(), null, new JsonHttpResponseHandler() {
+                        WebService.getByUrl(URLHelper.getURL(getBaseContext(), getString(R.string.tmdbpopular), apikey), null, new JsonHttpResponseHandler() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                                 moviedata = new Gson().fromJson(response.toString(), MovieListModel.class);
+
+                                MovieListModel.setInstance(moviedata);
 
                                 setMovieListAdapter();
                             }
@@ -200,6 +214,26 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
                 }
 
                 break;
+        }
+    }
+
+    // preserve recycler view position
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+
+        outState.putParcelable(BUNDLE_RECYCLER_LAYOUT, movieRecyclerView.getLayoutManager().onSaveInstanceState());
+    }
+
+    // restore recycler view position
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+
+        if(savedInstanceState != null) {
+            Parcelable savedRecyclerLayoutState = savedInstanceState.getParcelable(BUNDLE_RECYCLER_LAYOUT);
+
+            movieRecyclerView.getLayoutManager().onRestoreInstanceState(savedRecyclerLayoutState);
         }
     }
 }
