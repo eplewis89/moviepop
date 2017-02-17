@@ -25,6 +25,11 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.udacity.erin.lewis.moviepop.MovieListActivity" />
         </activity>
+
+        <provider
+            android:name="com.udacity.erin.lewis.moviepop.data.StarContentProvider"
+            android:authorities="com.udacity.erin.lewis.moviepop"
+            android:exported="false"/>
     </application>
 
 </manifest>

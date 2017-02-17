@@ -2,12 +2,14 @@ package com.udacity.erin.lewis.moviepop;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.database.Cursor;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,11 +20,15 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.loopj.android.http.JsonHttpResponseHandler;
 import com.udacity.erin.lewis.moviepop.adapters.MovieAdapter;
+import com.udacity.erin.lewis.moviepop.data.StarContract;
 import com.udacity.erin.lewis.moviepop.helpers.URLHelper;
 import com.udacity.erin.lewis.moviepop.helpers.WebService;
 import com.udacity.erin.lewis.moviepop.models.MovieListModel;
+import com.udacity.erin.lewis.moviepop.models.MovieModel;
 
 import org.json.JSONObject;
+
+import java.util.List;
 
 import cz.msebera.android.httpclient.Header;
 
@@ -37,6 +43,7 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
     private MovieListModel moviedata;
     private RadioButton rButtonTopRated;
     private RadioButton rButtonPopular;
+    private RadioButton rButtonFavorite;
     private TextView mLoadingTV;
     private String apikey;
 
@@ -50,7 +57,7 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        apikey = getString(R.string.tmdbapikey);
+        apikey = URLHelper.getAPIKey(this);
 
         setContentView(R.layout.activity_movie_list);
 
@@ -72,9 +79,22 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
                 }
             });
         } else {
-            moviedata = MovieListModel.getInstance();
+            if (currentSort == CurrentSort.FAVORITES) {
+                setupListFromFavorites();
+            } else {
+                moviedata = MovieListModel.getInstance();
 
-            setMovieListAdapter();
+                setMovieListAdapter();
+            }
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+
+        if(currentSort == CurrentSort.FAVORITES) {
+            setupListFromFavorites();
         }
     }
 
@@ -101,6 +121,7 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
 
         mLoadingTV.setVisibility(View.GONE);
         movieRecyclerView.setVisibility(View.VISIBLE);
+        mAdapter.notifyDataSetChanged();
     }
 
     @Override
@@ -143,6 +164,7 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
 
         rButtonTopRated = (RadioButton) dialogView.findViewById(R.id.radio_top_rated);
         rButtonPopular = (RadioButton) dialogView.findViewById(R.id.radio_popular);
+        rButtonFavorite = (RadioButton) dialogView.findViewById(R.id.radio_favorite);
 
         switch (currentSort) {
             case POPULAR:
@@ -150,6 +172,9 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
                 break;
             case TOPRATED:
                 rButtonTopRated.setChecked(true);
+                break;
+            case FAVORITES:
+                rButtonFavorite.setChecked(true);
                 break;
         }
 
@@ -163,7 +188,7 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
 
                 switch (currentSort) {
                     case TOPRATED:
-                        WebService.getByUrl(URLHelper.getURL(getParent(), getString(R.string.tmdbtoprated), apikey), null, new JsonHttpResponseHandler() {
+                        WebService.getByUrl(URLHelper.getURL(getBaseContext(), getString(R.string.tmdbtoprated), apikey), null, new JsonHttpResponseHandler() {
                             @Override
                             public void onSuccess(int statusCode, Header[] headers, JSONObject response) {
                                 moviedata = new Gson().fromJson(response.toString(), MovieListModel.class);
@@ -186,6 +211,10 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
                             }
                         });
                         break;
+                    case FAVORITES: {
+                        setupListFromFavorites();
+                        break;
+                    }
                 }
             }
         });
@@ -214,6 +243,13 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
                 }
 
                 break;
+            case R.id.radio_favorite:
+                if (checked) {
+                    currentSort = CurrentSort.FAVORITES;
+                    rButtonFavorite.setChecked(true);
+                }
+
+                break;
         }
     }
 
@@ -222,6 +258,7 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
+        outState.putSerializable("CURRENT_SORT", currentSort);
         outState.putParcelable(BUNDLE_RECYCLER_LAYOUT, movieRecyclerView.getLayoutManager().onSaveInstanceState());
     }
 
@@ -230,10 +267,36 @@ public class MovieListActivity extends AppCompatActivity implements MovieAdapter
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
-        if(savedInstanceState != null) {
+        if (savedInstanceState != null) {
+            currentSort = (CurrentSort) savedInstanceState.getSerializable("CURRENT_SORT");
+
             Parcelable savedRecyclerLayoutState = savedInstanceState.getParcelable(BUNDLE_RECYCLER_LAYOUT);
 
             movieRecyclerView.getLayoutManager().onRestoreInstanceState(savedRecyclerLayoutState);
         }
+    }
+
+    private void setupListFromFavorites() {
+        Cursor cursor = getContentResolver().query(StarContract.StarEntry.CONTENT_URI, null, null, null, null);
+
+        moviedata = new MovieListModel();
+
+        try {
+            while (cursor.moveToNext()) {
+                String json = cursor.getString(cursor.getColumnIndex(StarContract.StarEntry.COLUMN_MOVIE_JSON));
+
+                MovieModel movie = new Gson().fromJson(json, MovieModel.class);
+
+                moviedata.results.add(movie);
+            }
+        } catch (Exception ex) {
+
+        } finally {
+            cursor.close();
+        }
+
+        MovieListModel.setInstance(moviedata);
+
+        setMovieListAdapter();
     }
 }

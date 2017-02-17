@@ -7,9 +7,10 @@
     android:layout_height="fill_parent"
     android:fillViewport="true">
 
-    <RelativeLayout
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="fill_parent"
+        android:orientation="vertical">
 
         <RelativeLayout
             android:id="@+id/details_rl"
@@ -74,19 +75,55 @@
                 android:text="movie_details_plot"
                 android:textAppearance="@style/TextAppearance.AppCompat.Body1" />
         </RelativeLayout>
-        <RelativeLayout
-            android:id="@+id/trailers_rl"
-            android:layout_below="@+id/details_rl"
+
+        <LinearLayout
+            android:id="@+id/trailers_ll"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content">
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
             <TextView
+                android:id="@+id/trailers_tv"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Trailers"/>
-            <ListView
-                android:id="@+id/listview_trailers"
+                android:gravity="center"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                android:text="Trailers"
+                android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
+
+            <TextView
+                android:id="@+id/trailers_loading_tv"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"></ListView>
-        </RelativeLayout>
-    </RelativeLayout>
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="@dimen/activity_vertical_margin"
+                android:text="Loading..."
+                android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/reviews_ll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/reviews_tv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:paddingTop="@dimen/activity_vertical_margin"
+                android:text="Reviews"
+                android:textAppearance="@style/TextAppearance.AppCompat.Headline" />
+
+            <TextView
+                android:id="@+id/reviews_loading_tv"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:padding="@dimen/activity_vertical_margin"
+                android:text="Loading..."
+                android:textAppearance="@style/TextAppearance.AppCompat.Title" />
+        </LinearLayout>
+    </LinearLayout>
 </ScrollView>

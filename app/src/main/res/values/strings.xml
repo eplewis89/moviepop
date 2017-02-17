@@ -13,6 +13,7 @@
     <string name="tmdblanguage">en-US</string>
     <string name="tmdbvideos">videos</string>
     <string name="tmdbreviews">reviews</string>
+    <string name="tmdbtrailers">videos</string>
 
     <!-- TMDB image related strings -->
     <string name="tmdbimagepath">https://image.tmdb.org/t/p/</string>

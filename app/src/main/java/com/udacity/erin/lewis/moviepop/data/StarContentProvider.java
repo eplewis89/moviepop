@@ -113,6 +113,10 @@ public class StarContentProvider extends ContentProvider {
         int starsdeleted = 0;
 
         switch (sUriMatcher.match(uri)) {
+            case STARS:
+                starsdeleted = db.delete(StarContract.StarEntry.TABLE_NAME, selection, selectionArgs);
+
+                break;
             case STAR_WITH_ID: {
                 String id = uri.getPathSegments().get(1);
 
